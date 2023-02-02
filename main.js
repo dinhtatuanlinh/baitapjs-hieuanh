@@ -3,9 +3,10 @@ let url = require('url');
 let queryString = require("querystring")
 let connection = require("./database/connection")
 
-let dataInDBExisting = false;//if data has already created in database this var is true else this var is false
+let dataInDBExisting = true;//if data has already created in database this var is true else this var is false
 if (!dataInDBExisting) {
     connection.createTables()
+    
 }
 
 
@@ -23,12 +24,12 @@ let service = http.createServer(function (req, res) {
         switch (parsed.pathname) {
             case "/":
                 console.log('123');
-                
+                connection.createEmployee()
                 res.writeHead(200, { 'Content-Type': 'application/json' })
                 res.end()
                 break
             case "/get-employee":
-
+                connection.updateEmployee()
                 res.writeHead(200, { 'Content-Type': 'application/json' })
                 res.end()
                 break
