@@ -122,40 +122,26 @@ function updateEmployee() {
 }
 function getEmployees(cmt, name, from, to) {
     let query
-    if (cmt != ""){
+
+    if (cmt != undefined){
         query = `SELECT * FROM employees WHERE CMT = '${cmt}' AND Deleted_at IS NULL;`
-    } else if(naem != ""){
+    } else if(name != undefined){
         query = `SELECT * FROM employees WHERE Full_Name = '${name}' AND Deleted_at IS NULL;`
-    }else if( from != "" && to != ""){
-        query = `select * from employees where Hire_date BETWEEN '${from}' AND '${to}' AND Deleted_at = null;`
+    }else if( from != undefined && to != undefined){
+        query = `select * from employees where Deleted_at IS NULL AND Hire_Date BETWEEN '${from}' AND '${to}' ;`
     }
+    console.log(query)
     // xử lý bất đồng bộ bằng Promise
     return new Promise((resolve, reject)=>{
         conn.query(query, (err, result, fields) => {
             if (err) reject(err)
-            console.log(`get employee by ${cmt} successfully`);
+            console.log(`get employee successfully`);
             resolve(result) 
         });
     })
     
 }
 
-function getEmployeeByName(name) {
-    let getEmployeeByNameSql = `SELECT * FROM employees WHERE Full_Name = '${name}' AND Deleted_at IS NULL;`
-    conn.query(getEmployeeByNameSql, (err, result, fields) => {
-        if (err) throw err;
-        console.log(`get employee by ${cmt} successfully`);
-        return result
-    });
-}
-function getEmployeeByHireDate(from, to){
-    let getEmployeeByCMTSql = `select * from employees where Hire_date BETWEEN '${from}' AND '${to}' AND Deleted_at = null;`
-    conn.query(getEmployeeByCMTSql, (err, result, fields) => {
-        if (err) throw err;
-        console.log(`get employee by ${cmt} successfully`);
-        return result
-    });
-}
 function getAll(tableName){
     let getAllSql = `SELECT * FROM ${tableName} WHERE Deleted_at IS NULL;`
     conn.query(getAllSql, (err, result, fields) => {
@@ -163,6 +149,62 @@ function getAll(tableName){
         console.log(`get data from ${tableName} successfully`);
         return result
     });
+}
+
+function addWordsToEmployee(cmt, works){
+    let date = new Date()
+    let createdAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+    let addWordsToEmployeeQuery = `INSERT INTO work (CMT, Works, Created_at)` +
+    ` VALUES('${cmt}', ${works}, '${createdAt}');`
+    console.log(addWordsToEmployeeQuery)
+    conn.query(addWordsToEmployeeQuery, function (err, results) {
+        if (err) throw err;
+        console.log("insert sucessfully!");
+    })
+}
+
+function getWorkOfEveryEmployeeInMonth(month, year){
+    let query = `select * from employees INNER JOIN work ON employees.CMT = work.CMT WHERE MONTH(work.Created_at) = ${month + 1} AND YEAR(work.Created_at) = ${year} AND employees.Deleted_at IS NULL AND work.Deleted_at IS NULL;`
+    console.log(query)
+    return new Promise((resolve, reject)=>{
+        conn.query(query, (err, result, fields) => {
+            if (err) reject(err)
+            console.log(`get employee successfully`);
+            resolve(result) 
+        });
+    })
+}
+function getOptions(){
+    let query = `SELECT * FROM options;`
+    console.log(query)
+    return new Promise((resolve, reject)=>{
+        conn.query(query, (err, result, fields) => {
+            if (err) reject(err)
+            console.log(`get employee successfully`);
+            // console.log(result)
+            resolve(result) 
+        });
+    })
+}
+function addOption(data){
+    let date = new Date()
+    let createdAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+    let value = ''
+    data.forEach((element, i) => {
+        if ((data.length -1) == i){
+            value += `('${element.name}', '${element.value}', '${createdAt}') `
+        }else{
+            value += `('${element.name}', '${element.value}', '${createdAt}'), `
+        }
+        
+    });
+    let query = `INSERT INTO options (Name, Value, Created_at)` +
+    ` VALUES ${value};`
+    console.log(query)
+    conn.query(query, function (err, results) {
+        if (err) throw err;
+        console.log("insert sucessfully!");
+    })
 }
 
 // function getWorkOfAnEmployeeByMonth(CMT,)
@@ -173,9 +215,11 @@ module.exports = {
     createEmployee: createEmployee,
     updateEmployee: updateEmployee,
     getEmployees: getEmployees,
-    getEmployeeByName: getEmployeeByName,
-    getEmployeeByHireDate: getEmployeeByHireDate,
-    getAll: getAll
+    getAll: getAll,
+    addWordsToEmployee: addWordsToEmployee,
+    getWorkOfEveryEmployeeInMonth: getWorkOfEveryEmployeeInMonth,
+    getOptions: getOptions,
+    addOption: addOption,
 };
 
 // - tìm kiếm nhân viên theo tên số CMT
@@ -187,7 +231,7 @@ module.exports = {
 // dùng câu sql select * from employees where Hire_date BETWEEN '2022-10-1' AND '2022-11-1' AND Deleted_at = null để tìm theo tên
 
 // - tinh trung bình lương của tất cả nhân viên trong khoảng thời gian
-// dùng câu select * from employees INNER JOIN work WHERE employees.CMT = work.CMT AND work.Create_at = '2022-10-1' AND employees.Deleted_at = null AND work.Deleted_at = null
+// dùng câu 
 // câu sql này sẽ nối 2 bảng employees và work lại làm 1 bảng từ đó có thể biết được nhân viên nào làm được bao nhiêu công việc trong tháng 10 năm 2022
 // khi có được lượng công việc của từng nhân viên dùng câu lệnh if else để check xem nhân viên đó là biên chế hay thời vụ
 //  sau đó lấy dữ liệu từ bàng options ra

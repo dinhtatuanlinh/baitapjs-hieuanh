@@ -13,7 +13,7 @@ if (!dataInDBExisting) {
 // let app = require(__pathFrameWork + 'app')
 // truyền vào 1 hàm callback vào hàm http.createServer(callback)
 // callback có 2 biến truyền vào là request và response
-let service = http.createServer(async function (req, res) {
+let service = http.createServer(function (req, res) {
 
     const parsed = url.parse(req.url);
     // req.url = google.com?search=book&date=20/10&...
@@ -23,7 +23,7 @@ let service = http.createServer(async function (req, res) {
     // console.log(params)
     // let a = parsed.search
     // console.log(req.url);
-    
+
     // // midleware()
     // truy cập vào service có vài phương thức để truy cập
     // method 1 GET dùng để lấy dữ liệu 
@@ -47,12 +47,32 @@ let service = http.createServer(async function (req, res) {
                 res.end()
                 break
             case "/get-employee":
-                let result = await connection.getEmployees('073089014094')
-                    console.log(result)
+                let cmt = params.cmt
+                let name = params.name
+                let from = params.from
+                let to = params.to
+                // console.log(cmt, name, from, to)
+                // let result = await connection.getEmployees('073089014094')
+                connection.getEmployees(cmt, name, from, to).then(result=>{
                     res.writeHead(200, { 'Content-Type': 'application/json' })
-                    res.end()
+                    res.end(JSON.stringify(result))
+                }).catch(err =>{
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify(err))
+                })
 
-
+                break
+            case "/get-average-salary-in-month":
+                let month = parseInt(params.month)
+                let year = parseInt(params.year)
+                connection.getWorkOfEveryEmployeeInMonth(month, year).then(async result=>{
+                    console.log(await countAverageSalary(result))
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify(result))
+                }).catch(err =>{
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify(err))
+                })
                 break
             case "/get-email":
                 // connection.getEmployeeByCMT('073089014094')
@@ -89,25 +109,35 @@ let service = http.createServer(async function (req, res) {
         switch (parsed.pathname) {
             case "/create-employee":
                 console.log("test post method")
-                getData(req).then(result=>{
+                getData(req).then(result => {
+                    console.log(result)
+                    connection.addWordsToEmployee(result.cmt, result.work)
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end()
+                })
+
+                break
+            case "/add-work":
+                getData(req).then(result => {
                     console.log(result)
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     res.end()
                 })
-                
-                break
-            case "/create-employee":
-
                 break
             case "/update-employee":
-                
+
                 break
             case "/delete-employee":
 
                 break
 
-            case "/login":
-                login(req, res)
+            case "/add-options":
+                getData(req).then(result => {
+                    console.log(result)
+                    connection.addOption(result)
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end()
+                })
                 break
             case "/register":
                 register(req, res)
@@ -147,7 +177,7 @@ service.on("error", onError);
  */
 
 function onError(error) {
-    if (error){
+    if (error) {
         console.log("đã có lỗi")
     }
 }
@@ -184,4 +214,52 @@ async function login(req, res) {
 
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(data))
+}
+
+function countAverageSalary(data){
+    return new Promise((resolve, reject)=>{
+        connection.getOptions().then(result=>{
+            let baseSalary
+            let salaryPerHour
+            let salaryPerContract
+            result.forEach(element => {
+                switch (element.Name) {
+                    case "base salary":
+                        baseSalary = parseInt(element.Value)
+                        break;
+                    case "salary per hour":
+                        salaryPerHour = parseInt(element.Value)
+                        break
+                    case "salary per contract":
+                        salaryPerContract = parseInt(element.Value)
+                        break
+                    default:
+                        break;
+                }
+            });
+            let totalSalary = 0
+            data.forEach(element => {
+                switch (element.Role) {
+                    case 1:
+                        totalSalary += element.Works * salaryPerContract
+                        break;
+                    case 2:
+                        totalSalary += baseSalary + element.Works * salaryPerHour
+                        break;
+                
+                    default:
+                        break;
+                }
+            });
+            console.log(typeof data.length)
+            let averageSalary = totalSalary / data.length
+            resolve(averageSalary)
+            console.log(data)
+            console.log(result)
+        }).catch(err=>{
+            console.log(err)
+            reject(err)
+        })
+    })
+    
 }
