@@ -5,7 +5,7 @@ let conn = mysql.createConnection({
     user: "root",
     password: ""
 });
-function createTables (){
+function createTables() {
     conn.connect(function (err) {
         if (err) {
             throw err;
@@ -88,44 +88,94 @@ function createTables (){
 }
 const PARTTIME = 1
 const FULLTIME = 2
-let DATEFORMAT = "DD/MM/YYYY"
 
 
-function createEmployee(){
+
+function createEmployee() {
     let cccd = "073089014094"
     let name = "nguyen van a"
     let deparment = "DU11"
     let hireDate = '2021-10-1'
     let role = PARTTIME
     let date = new Date()
-    let createdAt = `${date.getFullYear()}-${date.getMonth() +1}-${date.getDate()}`
-    let createEmployeeSql = `INSERT INTO employees (CMT, Full_Name, Department, Hire_Date, \`Role\`, Created_at)` + 
-    ` VALUES('${cccd}', '${name}', '${deparment}',  '${hireDate}', ${role}, '${createdAt}');`
+    let createdAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+    let createEmployeeSql = `INSERT INTO employees (CMT, Full_Name, Department, Hire_Date, \`Role\`, Created_at)` +
+        ` VALUES('${cccd}', '${name}', '${deparment}',  '${hireDate}', ${role}, '${createdAt}');`
     conn.query(createEmployeeSql, function (err, results) {
         if (err) throw err;
         console.log("insert sucessfully!");
     })
 }
-function updateEmployee(){
+function updateEmployee() {
     let cccd = "073089014094"
     let name = "nguyen van b"
     let deparment = "DU11"
     let hireDate = '2021-10-1'
     let role = PARTTIME
     let date = new Date()
-    let updatedAt = `${date.getFullYear()}-${date.getMonth() +1}-${date.getDate()}`
+    let updatedAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
     let updateEmployeeSql = `UPDATE employees  SET Full_Name = '${name}', Updated_at = '${updatedAt}' WHERE CMT = '${cccd}';`
     conn.query(updateEmployeeSql, function (err, results) {
         if (err) throw err;
         console.log("update sucessfully!");
     })
 }
+function getEmployees(cmt, name, from, to) {
+    let query
+    if (cmt != ""){
+        query = `SELECT * FROM employees WHERE CMT = '${cmt}' AND Deleted_at IS NULL;`
+    } else if(naem != ""){
+        query = `SELECT * FROM employees WHERE Full_Name = '${name}' AND Deleted_at IS NULL;`
+    }else if( from != "" && to != ""){
+        query = `select * from employees where Hire_date BETWEEN '${from}' AND '${to}' AND Deleted_at = null;`
+    }
+    // xử lý bất đồng bộ bằng Promise
+    return new Promise((resolve, reject)=>{
+        conn.query(query, (err, result, fields) => {
+            if (err) reject(err)
+            console.log(`get employee by ${cmt} successfully`);
+            resolve(result) 
+        });
+    })
+    
+}
+
+function getEmployeeByName(name) {
+    let getEmployeeByNameSql = `SELECT * FROM employees WHERE Full_Name = '${name}' AND Deleted_at IS NULL;`
+    conn.query(getEmployeeByNameSql, (err, result, fields) => {
+        if (err) throw err;
+        console.log(`get employee by ${cmt} successfully`);
+        return result
+    });
+}
+function getEmployeeByHireDate(from, to){
+    let getEmployeeByCMTSql = `select * from employees where Hire_date BETWEEN '${from}' AND '${to}' AND Deleted_at = null;`
+    conn.query(getEmployeeByCMTSql, (err, result, fields) => {
+        if (err) throw err;
+        console.log(`get employee by ${cmt} successfully`);
+        return result
+    });
+}
+function getAll(tableName){
+    let getAllSql = `SELECT * FROM ${tableName} WHERE Deleted_at IS NULL;`
+    conn.query(getAllSql, (err, result, fields) => {
+        if (err) throw err;
+        console.log(`get data from ${tableName} successfully`);
+        return result
+    });
+}
+
+// function getWorkOfAnEmployeeByMonth(CMT,)
 
 module.exports = {
     conn: conn,
     createTables: createTables,
     createEmployee: createEmployee,
-    updateEmployee: updateEmployee
+    updateEmployee: updateEmployee,
+    getEmployees: getEmployees,
+    getEmployeeByName: getEmployeeByName,
+    getEmployeeByHireDate: getEmployeeByHireDate,
+    getAll: getAll
 };
 
 // - tìm kiếm nhân viên theo tên số CMT
@@ -140,7 +190,7 @@ module.exports = {
 // dùng câu select * from employees INNER JOIN work WHERE employees.CMT = work.CMT AND work.Create_at = '2022-10-1' AND employees.Deleted_at = null AND work.Deleted_at = null
 // câu sql này sẽ nối 2 bảng employees và work lại làm 1 bảng từ đó có thể biết được nhân viên nào làm được bao nhiêu công việc trong tháng 10 năm 2022
 // khi có được lượng công việc của từng nhân viên dùng câu lệnh if else để check xem nhân viên đó là biên chế hay thời vụ
-//  sau đó lấy dữ liệu từ bàng options ra 
+//  sau đó lấy dữ liệu từ bàng options ra
 // đối với nhân viên biên chế thì lấy lương cơ bản lưu ở bảng options + với số lượng công việc từ kết quả của 2 bảng employees và work ở trên
 // nhân với lương của mỗi work làm thêm
 

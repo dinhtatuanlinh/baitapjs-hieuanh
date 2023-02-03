@@ -1,4 +1,5 @@
-let http = require("http");
+let http = require("http"); // thư viên http để tạo server
+// cần 2 thư viện là url và querystring để lấy cái biến mà từ user gửi lên
 let url = require('url');
 let queryString = require("querystring")
 let connection = require("./database/connection")
@@ -6,40 +7,71 @@ let connection = require("./database/connection")
 let dataInDBExisting = true;//if data has already created in database this var is true else this var is false
 if (!dataInDBExisting) {
     connection.createTables()
-    
 }
 
-
+// google.com
 // let app = require(__pathFrameWork + 'app')
-let service = http.createServer(function (req, res) {
+// truyền vào 1 hàm callback vào hàm http.createServer(callback)
+// callback có 2 biến truyền vào là request và response
+let service = http.createServer(async function (req, res) {
 
     const parsed = url.parse(req.url);
+    // req.url = google.com?search=book&date=20/10&...
+    // hàm queryString.parse chỉ có thể lấy dữ liêu bằng phương thức get
     let params = queryString.parse(parsed.query)
-    console.log(params)
-    let a = parsed.search
-    console.log(req.url);
+    // phương thức queryString.parse sẽ bóc biến search mà user lên lấy giá trị của biến
+    // console.log(params)
+    // let a = parsed.search
+    // console.log(req.url);
     
-    // midleware()
+    // // midleware()
+    // truy cập vào service có vài phương thức để truy cập
+    // method 1 GET dùng để lấy dữ liệu 
+    // truyền dữ liệu cảu method get là qua url google.com?search=book
+    // search tên của biến truyền vào còn book là giá trị cảu biến
+    // method 2 POST dùng để update và delete dữ liệu
+    // nhập url vào trình duyệt thì phương sẽ get
+    // dữ liệu mà truyền quà phương thức get thì ko được mã hóa không an toàn
+    // do vây với dữ liệu mà cần bảo mật thì mình dùng phương thức post
     if (req.method === 'GET') {
+        // google.com/
+        // biến parsed.pathname = /
+        // nếu mà google.com/get-employee
+        // thì parsed.pathname trả ra /get-employee
         switch (parsed.pathname) {
             case "/":
                 console.log('123');
-                connection.createEmployee()
+                // connection.createEmployee()
+                // báo cho trình duyệt biết là server đã làm xong việc bằng 2 hàm res.writeHead và res.end()
                 res.writeHead(200, { 'Content-Type': 'application/json' })
                 res.end()
                 break
             case "/get-employee":
-                connection.updateEmployee()
-                res.writeHead(200, { 'Content-Type': 'application/json' })
-                res.end()
+                let result = await connection.getEmployees('073089014094')
+                    console.log(result)
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end()
+
+
                 break
             case "/get-email":
+                // connection.getEmployeeByCMT('073089014094')
+                // kiêm tra dữ liệu gửi lên bằng phương thức get
+                console.log('############################')
+                console.log(params.search)
+                console.log('############################')
                 console.log('email')
-                var data = {
+                // data đang ở dang object 
+                let data = {
                     email: "dttl@gmail.com"
                 }
+                console.log(typeof data) // kiểm tra kiểu dữ liệu
+                // chuyển dữ liệu từ object thành string (JSON) bằng hàm JSON.stringify
+                let StringData = JSON.stringify(data)
+                console.log(typeof StringData)
                 res.writeHead(200, { 'Content-Type': 'application/json' })
-                res.end(JSON.stringify(data))
+                // truyền dữ liệu kiểu string vào hàm res.end() dữ liệu sẽ được gửi tới trình duyệt
+                res.end(StringData)
                 break
             case "/weather":
                 res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -55,6 +87,15 @@ let service = http.createServer(function (req, res) {
         }
     } else if (req.method === 'POST') {
         switch (parsed.pathname) {
+            case "/create-employee":
+                console.log("test post method")
+                getData(req).then(result=>{
+                    console.log(result)
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end()
+                })
+                
+                break
             case "/create-employee":
 
                 break
@@ -85,69 +126,40 @@ let service = http.createServer(function (req, res) {
 });
 
 
-let Port = normalizePort(process.env.PORT || 8988);
-
+// let Port = normalizePort(process.env.PORT || 8988);
+// gọi hàm listen truyền vào số port và 1 hàm ở in ra câu báo server tạo thành công
+let port = 9000 // tránh trường hợp magic number 
+// trên máy chủ chạy rất nhiều services 
+// ví dụ cái service này nó thông ra internet qua cổng 9000 của máy chủ 
 service.listen(
-    Port,
+    port,
     console.log(
-        `service on: http://localhost:${Port}`
+        `service on: http://localhost:${port}`
     )
 );
+// ví dụ trên máy chủ port 9000 đã có service khác chạy rồi thì service tạo ra sẽ bị lỗi
 service.on("error", onError);
-service.on("listening", onListening);
+// service.on("listening", onListening);
 
-/**
- * Normalize a port into a number, string, or false.
- */
-function normalizePort(val) {
-    let port = parseInt(val, 10);
 
-    if (isNaN(port)) {
-        // named pipe
-        return val;
-    }
-
-    if (port >= 0) {
-        // port number
-        return port;
-    }
-
-    return false;
-}
 /**
  * Event listener for HTTP server "error" event.
  */
 
 function onError(error) {
-    if (error.syscall !== "listen") {
-        throw error;
-    }
-
-    let bind = typeof Port === "string" ? "Pipe " + Port : "Port " + Port;
-
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-        case "EACCES":
-            console.error(bind + " requires elevated privileges");
-            process.exit(1);
-            break;
-        case "EADDRINUSE":
-            console.error(bind + " is already in use");
-            process.exit(1);
-            break;
-        default:
-            throw error;
+    if (error){
+        console.log("đã có lỗi")
     }
 }
 
 /**
  * Event listener for HTTP server "listening" event.
  */
-function onListening() {
-    let addr = service.address();
-    let bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-    console.log("Listening on " + bind);
-}
+// function onListening() {
+//     let addr = service.address();
+//     let bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+//     console.log("Listening on " + bind);
+// }
 let user = {
     username: "dinhtatuanlinh",
     password: "123456"
