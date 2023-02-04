@@ -6,101 +6,96 @@ let conn = mysql.createConnection({
     password: ""
 });
 function createTables() {
-    conn.connect(function (err) {
-        if (err) {
-            throw err;
-        }
-        console.log("Connected!");
-        let dropEmployeeSql = "DROP TABLE IF EXISTS Employees ";
-        conn.query(dropEmployeeSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table EMPLOYEES dropped");
-        });
-        let createEmployeeSql = "CREATE TABLE Employees " +
-            " (Id INT not null AUTO_INCREMENT," +
-            " CMT VARCHAR(255) not null, " +
-            " Full_Name VARCHAR(255) not null, " +
-            " Department VARCHAR(255) not null, " +
-            " Hire_Date DATE not null, " +
-            " Role INT not null, " +
-            " Created_at DATE not null, " +
-            " Updated_at DATE, " +
-            " Deleted_at DATE, " +
-            " PRIMARY KEY (Id) )";
-        conn.query(createEmployeeSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Employees created");
+    return new Promise((resolve, reject)=>{
+        conn.connect(function (err) {
+            if (err) {
+                throw err;
+            }
+            console.log("Connected!");
+            let dropEmployeeSql = "DROP TABLE IF EXISTS Employees ";
+            conn.query(dropEmployeeSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table EMPLOYEES dropped");
+            });
+            let createEmployeeSql = "CREATE TABLE Employees " +
+                " (Id INT not null AUTO_INCREMENT," +
+                " CMT VARCHAR(255) not null, " +
+                " Full_Name VARCHAR(255) not null, " +
+                " Department VARCHAR(255) not null, " +
+                " Hire_Date DATE not null, " +
+                " Role INT not null, " +
+                " Created_at DATE not null, " +
+                " Updated_at DATE, " +
+                " Deleted_at DATE, " +
+                " PRIMARY KEY (Id) )";
+            conn.query(createEmployeeSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table Employees created");
+            })
+    
+            let dropWorkSql = "DROP TABLE IF EXISTS Work ";
+            conn.query(dropWorkSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table Roles dropped");
+            });
+            let createWorkSql = "CREATE TABLE Work " +
+                " (Id INT not null AUTO_INCREMENT, " +
+                " CMT VARCHAR(255) not null, " +
+                " Works INT not null, " +
+                " Date DATE not null, " +
+                " Created_at DATE not null, " +
+                " Updated_at DATE, " +
+                " Deleted_at DATE, " +
+                " PRIMARY KEY (Id) )";
+            conn.query(createWorkSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table Work created");
+            })
+    
+            let dropOptionsSql = "DROP TABLE IF EXISTS Options ";
+            conn.query(dropOptionsSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table Options dropped");
+            });
+            let createOptionsSql = "CREATE TABLE Options " +
+                " (Id INT not null AUTO_INCREMENT, " +
+                " Name VARCHAR(255) not null, " +
+                " Value VARCHAR(255) not null, " +
+                " Created_at DATE not null, " +
+                " Updated_at DATE, " +
+                " Deleted_at DATE, " +
+                " PRIMARY KEY (Id) )";
+            conn.query(createOptionsSql, function (err, results) {
+                if (err) throw err;
+                console.log("Table Options created");
+            })
+    
+            addOption([
+                {
+                    name: "base salary",
+                    value: "2000000"
+                },
+                {
+                    name: "salary per hour",
+                    value: "200000"
+                },
+                {
+                    name: "salary per contract",
+                    value: "200000"
+                }
+            ])
         })
-
-        let dropRolesSql = "DROP TABLE IF EXISTS Roles ";
-        conn.query(dropRolesSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Roles dropped");
-        });
-        let createRolesSql = "CREATE TABLE Roles " +
-            " (Id INT not null AUTO_INCREMENT," +
-            " Name VARCHAR(255) not null, " +
-            " Created_at DATE not null, " +
-            " Updated_at DATE, " +
-            " Deleted_at DATE, " +
-            " PRIMARY KEY (Id) )";
-        conn.query(createRolesSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Roles created");
-        })
-
-        let dropWorkSql = "DROP TABLE IF EXISTS Work ";
-        conn.query(dropWorkSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Roles dropped");
-        });
-        let createWorkSql = "CREATE TABLE Work " +
-            " (Id INT not null AUTO_INCREMENT, " +
-            " CMT VARCHAR(255) not null, " +
-            " Works INT not null, " +
-            " Created_at DATE not null, " +
-            " Updated_at DATE, " +
-            " Deleted_at DATE, " +
-            " PRIMARY KEY (Id) )";
-        conn.query(createWorkSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Work created");
-        })
-
-        let dropOptionsSql = "DROP TABLE IF EXISTS Options ";
-        conn.query(dropOptionsSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Options dropped");
-        });
-        let createOptionsSql = "CREATE TABLE Options " +
-            " (Id INT not null AUTO_INCREMENT, " +
-            " Name VARCHAR(255) not null, " +
-            " Value VARCHAR(255) not null, " +
-            " Created_at DATE not null, " +
-            " Updated_at DATE, " +
-            " Deleted_at DATE, " +
-            " PRIMARY KEY (Id) )";
-        conn.query(createOptionsSql, function (err, results) {
-            if (err) throw err;
-            console.log("Table Options created");
-        })
+        resolve("sucessfully")
     })
+    
 }
-const PARTTIME = 1
-const FULLTIME = 2
 
 
-
-function createEmployee() {
-    let cccd = "073089014094"
-    let name = "nguyen van a"
-    let deparment = "DU11"
-    let hireDate = '2021-10-1'
-    let role = PARTTIME
+function createEmployee(cccd, name, department, hireDate, role) {
     let date = new Date()
     let createdAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
     let createEmployeeSql = `INSERT INTO employees (CMT, Full_Name, Department, Hire_Date, \`Role\`, Created_at)` +
-        ` VALUES('${cccd}', '${name}', '${deparment}',  '${hireDate}', ${role}, '${createdAt}');`
+        ` VALUES('${cccd}', '${name}', '${department}',  '${hireDate}', ${role}, '${createdAt}');`
     conn.query(createEmployeeSql, function (err, results) {
         if (err) throw err;
         console.log("insert sucessfully!");
@@ -123,11 +118,11 @@ function updateEmployee() {
 function getEmployees(cmt, name, from, to) {
     let query
 
-    if (cmt != undefined){
+    if (cmt != ''){
         query = `SELECT * FROM employees WHERE CMT = '${cmt}' AND Deleted_at IS NULL;`
-    } else if(name != undefined){
+    } else if(name != ''){
         query = `SELECT * FROM employees WHERE Full_Name = '${name}' AND Deleted_at IS NULL;`
-    }else if( from != undefined && to != undefined){
+    }else if( from != '' && to != ''){
         query = `select * from employees where Deleted_at IS NULL AND Hire_Date BETWEEN '${from}' AND '${to}' ;`
     }
     console.log(query)
@@ -143,19 +138,23 @@ function getEmployees(cmt, name, from, to) {
 }
 
 function getAll(tableName){
-    let getAllSql = `SELECT * FROM ${tableName} WHERE Deleted_at IS NULL;`
-    conn.query(getAllSql, (err, result, fields) => {
-        if (err) throw err;
-        console.log(`get data from ${tableName} successfully`);
-        return result
-    });
+    let query = `SELECT * FROM ${tableName} WHERE Deleted_at IS NULL;`
+    console.log(query)
+    // xử lý bất đồng bộ bằng Promise
+    return new Promise((resolve, reject)=>{
+        conn.query(query, (err, result, fields) => {
+            if (err) reject(err)
+            console.log(`get employee successfully`);
+            resolve(result) 
+        });
+    })
 }
 
-function addWordsToEmployee(cmt, works){
+function addWordsToEmployee(cmt, works, dateOfWork ){
     let date = new Date()
     let createdAt = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-    let addWordsToEmployeeQuery = `INSERT INTO work (CMT, Works, Created_at)` +
-    ` VALUES('${cmt}', ${works}, '${createdAt}');`
+    let addWordsToEmployeeQuery = `INSERT INTO work (CMT, Works, Date, Created_at)` +
+    ` VALUES('${cmt}', ${works}, '${dateOfWork}', '${createdAt}');`
     console.log(addWordsToEmployeeQuery)
     conn.query(addWordsToEmployeeQuery, function (err, results) {
         if (err) throw err;
@@ -164,7 +163,18 @@ function addWordsToEmployee(cmt, works){
 }
 
 function getWorkOfEveryEmployeeInMonth(month, year){
-    let query = `select * from employees INNER JOIN work ON employees.CMT = work.CMT WHERE MONTH(work.Created_at) = ${month + 1} AND YEAR(work.Created_at) = ${year} AND employees.Deleted_at IS NULL AND work.Deleted_at IS NULL;`
+    let query = `select * from employees INNER JOIN work ON employees.CMT = work.CMT WHERE MONTH(work.Date) = ${month + 1} AND YEAR(work.Date) = ${year} AND employees.Deleted_at IS NULL AND work.Deleted_at IS NULL;`
+    console.log(query)
+    return new Promise((resolve, reject)=>{
+        conn.query(query, (err, result, fields) => {
+            if (err) reject(err)
+            console.log(`get employee successfully`);
+            resolve(result) 
+        });
+    })
+}
+function getWorkByCMTPerMonth(cmt, month, year){
+    let query = `select * from employees INNER JOIN work ON employees.CMT = work.CMT WHERE employees.CMT = '${cmt}' AND MONTH(work.Date) = ${month + 1} AND YEAR(work.Date) = ${year} AND employees.Deleted_at IS NULL AND work.Deleted_at IS NULL;`
     console.log(query)
     return new Promise((resolve, reject)=>{
         conn.query(query, (err, result, fields) => {
@@ -220,6 +230,7 @@ module.exports = {
     getWorkOfEveryEmployeeInMonth: getWorkOfEveryEmployeeInMonth,
     getOptions: getOptions,
     addOption: addOption,
+    getWorkByCMTPerMonth: getWorkByCMTPerMonth
 };
 
 // - tìm kiếm nhân viên theo tên số CMT

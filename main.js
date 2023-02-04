@@ -4,10 +4,41 @@ let url = require('url');
 let queryString = require("querystring")
 let connection = require("./database/connection")
 
+
+let baseSalary
+let salaryPerHour
+let salaryPerContract
+let cmt
+let month
+let year
+let name
+let from
+let to
 let dataInDBExisting = true;//if data has already created in database this var is true else this var is false
 if (!dataInDBExisting) {
-    connection.createTables()
+    connection.createTables().then(result => {
+        connection.getOptions().then(result => {
+            result.forEach(element => {
+                switch (element.Name) {
+                    case "base salary":
+                        baseSalary = parseInt(element.Value)
+                        break;
+                    case "salary per hour":
+                        salaryPerHour = parseInt(element.Value)
+                        break
+                    case "salary per contract":
+                        salaryPerContract = parseInt(element.Value)
+                        break
+                    default:
+                        break;
+                }
+            });
+        })
+    })
 }
+
+
+
 
 // google.com
 // let app = require(__pathFrameWork + 'app')
@@ -41,36 +72,81 @@ let service = http.createServer(function (req, res) {
         switch (parsed.pathname) {
             case "/":
                 console.log('123');
+
+                // set allow cors
+                res.setHeader("Access-Control-Allow-Origin", '*')
+                res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                res.setHeader('Access-Control-Allow-Credentials', true);
                 // connection.createEmployee()
                 // báo cho trình duyệt biết là server đã làm xong việc bằng 2 hàm res.writeHead và res.end()
                 res.writeHead(200, { 'Content-Type': 'application/json' })
-                res.end()
+                res.end("abc")
                 break
             case "/get-employee":
-                let cmt = params.cmt
-                let name = params.name
-                let from = params.from
-                let to = params.to
+                cmt = params.cmt
+                name = params.name
+                from = params.from
+                to = params.to
                 // console.log(cmt, name, from, to)
                 // let result = await connection.getEmployees('073089014094')
-                connection.getEmployees(cmt, name, from, to).then(result=>{
+                connection.getEmployees(cmt, name, from, to).then(result => {
+
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     res.end(JSON.stringify(result))
-                }).catch(err =>{
-                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                }).catch(err => {
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
                     res.end(JSON.stringify(err))
                 })
 
                 break
             case "/get-average-salary-in-month":
-                let month = parseInt(params.month)
-                let year = parseInt(params.year)
-                connection.getWorkOfEveryEmployeeInMonth(month, year).then(async result=>{
-                    console.log(await countAverageSalary(result))
-                    res.writeHead(200, { 'Content-Type': 'application/json' })
-                    res.end(JSON.stringify(result))
-                }).catch(err =>{
-                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                month = parseInt(params.month)
+                year = parseInt(params.year)
+                connection.getWorkOfEveryEmployeeInMonth(month, year).then(result => {
+                    // console.log(await countAverageSalary(result))
+                    let employees = result
+                    connection.getOptions().then(result => {
+                        result.forEach(element => {
+                            switch (element.Name) {
+                                case "base salary":
+                                    baseSalary = parseInt(element.Value)
+                                    break;
+                                case "salary per hour":
+                                    salaryPerHour = parseInt(element.Value)
+                                    break
+                                case "salary per contract":
+                                    salaryPerContract = parseInt(element.Value)
+                                    break
+                                default:
+                                    break;
+                            }
+                        });
+                        let data = countAverageSalary(employees)
+
+                        res.setHeader("Access-Control-Allow-Origin", '*')
+                        res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                        res.setHeader('Access-Control-Allow-Credentials', true);
+                        res.writeHead(200, { 'Content-Type': 'application/json' })
+                        res.end(`${data}`)
+
+                    })
+
+                }).catch(err => {
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
                     res.end(JSON.stringify(err))
                 })
                 break
@@ -89,19 +165,80 @@ let service = http.createServer(function (req, res) {
                 // chuyển dữ liệu từ object thành string (JSON) bằng hàm JSON.stringify
                 let StringData = JSON.stringify(data)
                 console.log(typeof StringData)
+
+                res.setHeader("Access-Control-Allow-Origin", '*')
+                res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                res.setHeader('Access-Control-Allow-Credentials', true);
                 res.writeHead(200, { 'Content-Type': 'application/json' })
                 // truyền dữ liệu kiểu string vào hàm res.end() dữ liệu sẽ được gửi tới trình duyệt
                 res.end(StringData)
                 break
-            case "/weather":
-                res.writeHead(200, { 'Content-Type': 'application/json' })
-                res.end('weather')
+            case "/get-salary-by-cmt-per-month":
+                cmt = params.cmt
+                month = parseInt(params.month)
+                year = parseInt(params.year)
+                connection.getWorkByCMTPerMonth(cmt, month, year).then(result => {
+                    let employeeInfo = result[0]
+                    connection.getOptions().then(result => {
+                        result.forEach(element => {
+                            switch (element.Name) {
+                                case "base salary":
+                                    baseSalary = parseInt(element.Value)
+                                    break;
+                                case "salary per hour":
+                                    salaryPerHour = parseInt(element.Value)
+                                    break
+                                case "salary per contract":
+                                    salaryPerContract = parseInt(element.Value)
+                                    break
+                                default:
+                                    break;
+                            }
+                        });
+                        let data = counSalary(employeeInfo)
+
+                        res.setHeader("Access-Control-Allow-Origin", '*')
+                        res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                        res.setHeader('Access-Control-Allow-Credentials', true);
+                        res.writeHead(200, { 'Content-Type': 'application/json' })
+                        res.end(`${data}`)
+
+                    })
+
+                }).catch(err => {
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
+                    res.end(err)
+                })
                 break
-            case "/users":
-                res.writeHead(200, { 'Content-Type': 'application/json' })
-                res.end('users')
+            case "/all":
+                connection.getAll('employees').then(result => {
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify(result))
+                }).catch(err => {
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
+                    res.end('users')
+                })
+
                 break
             default:
+                res.setHeader("Access-Control-Allow-Origin", '*')
+                res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                res.setHeader('Access-Control-Allow-Credentials', true);
                 res.writeHead(404, { 'Content-Type': 'application/json' })
                 res.end("404 not found!!!")
         }
@@ -111,7 +248,11 @@ let service = http.createServer(function (req, res) {
                 console.log("test post method")
                 getData(req).then(result => {
                     console.log(result)
-                    connection.addWordsToEmployee(result.cmt, result.work)
+                    connection.createEmployee(result.cmt, result.name, result.department, result.hireDate, result.role)
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     res.end()
                 })
@@ -119,7 +260,12 @@ let service = http.createServer(function (req, res) {
                 break
             case "/add-work":
                 getData(req).then(result => {
-                    console.log(result)
+                    connection.addWordsToEmployee(result.cmt, result.work, result.date)
+
+                    res.setHeader("Access-Control-Allow-Origin", '*')
+                    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+                    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type');
+                    res.setHeader('Access-Control-Allow-Credentials', true);
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     res.end()
                 })
@@ -169,7 +315,6 @@ service.listen(
 );
 // ví dụ trên máy chủ port 9000 đã có service khác chạy rồi thì service tạo ra sẽ bị lỗi
 service.on("error", onError);
-// service.on("listening", onListening);
 
 
 /**
@@ -182,18 +327,8 @@ function onError(error) {
     }
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-// function onListening() {
-//     let addr = service.address();
-//     let bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-//     console.log("Listening on " + bind);
-// }
-let user = {
-    username: "dinhtatuanlinh",
-    password: "123456"
-}
+
+
 function getData(req) {
     return new Promise((resolve, reject) => {
         req.on("data", (chunk) => {
@@ -204,62 +339,28 @@ function getData(req) {
     })
 }
 
-async function login(req, res) {
-    let data = await getData(req)
-    console.log(data)
-    if (data.username !== user.username && data.password !== user.password) {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end("error input")
-    }
+function countAverageSalary(data) {
+    let totalSalary = 0
+    data.forEach(element => {
+        totalSalary += counSalary(element, baseSalary, salaryPerContract, salaryPerHour)
+    });
 
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(data))
+    let averageSalary = totalSalary / data.length
+    return averageSalary
 }
 
-function countAverageSalary(data){
-    return new Promise((resolve, reject)=>{
-        connection.getOptions().then(result=>{
-            let baseSalary
-            let salaryPerHour
-            let salaryPerContract
-            result.forEach(element => {
-                switch (element.Name) {
-                    case "base salary":
-                        baseSalary = parseInt(element.Value)
-                        break;
-                    case "salary per hour":
-                        salaryPerHour = parseInt(element.Value)
-                        break
-                    case "salary per contract":
-                        salaryPerContract = parseInt(element.Value)
-                        break
-                    default:
-                        break;
-                }
-            });
-            let totalSalary = 0
-            data.forEach(element => {
-                switch (element.Role) {
-                    case 1:
-                        totalSalary += element.Works * salaryPerContract
-                        break;
-                    case 2:
-                        totalSalary += baseSalary + element.Works * salaryPerHour
-                        break;
-                
-                    default:
-                        break;
-                }
-            });
-            console.log(typeof data.length)
-            let averageSalary = totalSalary / data.length
-            resolve(averageSalary)
-            console.log(data)
-            console.log(result)
-        }).catch(err=>{
-            console.log(err)
-            reject(err)
-        })
-    })
-    
+function counSalary(data) {
+    let salary
+    switch (data.Role) {
+        case 1:
+            salary = data.Works * salaryPerContract
+            break;
+        case 2:
+            salary = baseSalary + data.Works * salaryPerHour
+            break;
+
+        default:
+            break;
+    }
+    return salary
 }

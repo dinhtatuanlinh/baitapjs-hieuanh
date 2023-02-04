@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="employee-list"></div>
+    <div id="add-employee">
+      <p>add employee</p>
+      <input type="text" id="name" placeholder="tên" />
+      <input type="text" id="cmt" placeholder="Chứng minh thư" />
+      <input type="text" id="department" placeholder="đơn vị" />
+      <select name="role" id="role">
+        <option value="1">parttime</option>
+        <option value="2">fulltime</option>
+      </select>
+      <input type="text" id="hire-date" placeholder="ngày tuyển" />
+      <button onclick="addEmployee()">add employee</button>
+    </div>
+    <div id="add-work">
+      <input type="text" id="cmt-work" placeholder="chứng minh thư" />
+      <input type="text" id="work" placeholder="lượng công việc trong tháng" />
+      <input type="text" id="date-work" placeholder="tháng làm việc" />
+      <button onclick="addWork()">add work</button>
+    </div>
+    <div id="get-employee">
+        <input type="text" id="cmt-get-employee" placeholder="chứng minh thư" />
+        <input type="text" id="name-get-employee" placeholder="tên" />
+        <input type="text" id="from-get-employee" placeholder="Từ ngày" />
+        <input type="text" id="to-get-employee" placeholder="tới ngày" />
+        <button onclick="getEmployee()">get employee</button>
+    </div>
+    <div id="get-salary-by-month">
+        <input type="text" id="cmt-get-salary-by-month" placeholder="chứng minh thư" />
+        <input type="text" id="month-get-salary-by-month" placeholder="tháng" />
+        <input type="text" id="year-get-salary-by-month" placeholder="năm" />
+        <button onclick="getSalary()">get salary</button>
+        <p id="salary-of-employee"></p>
+    </div>
+    <div id="get-average-salary-in-month">
+        <input type="text" id="month-get-average-salary-in-month" placeholder="tháng" />
+        <input type="text" id="year-get-average-salary-in-month" placeholder="năm" />
+        <button onclick="getAverageSalary()">get average salary</button>
+        <p id="average-salary-of-month"></p>
+    </div>
+    <script>
+      let xhttp = new XMLHttpRequest();
+      let baseUrl = "http://localhost:9000/";
+
+      function get(endpoint) {
+        return new Promise((resolve, reject) => {
+          xhttp.open("GET", baseUrl + endpoint, false);
+          xhttp.send();
+          let result = xhttp.responseText;
+          console.log(result)
+          resolve(result);
+        });
+      }
+      function post(endpoint, data) {
+        return new Promise((resolve, reject) => {
+          xhttp.open("POST", baseUrl + endpoint, false);
+          console.log("dads");
+          xhttp.send(data);
+          let result = xhttp.responseText;
+          resolve(result);
+        });
+      }
+      function createDiv(text) {
+        let newDiv = document.createElement("div");
+        newDiv.innerHTML = text;
+        return newDiv;
+      }
+      let employeeList = document.getElementById("employee-list");
+
+      get("all").then((result) => {
+        result = JSON.parse(result)
+        result.forEach((element) => {
+            let role
+            if(element.Role == 1){
+                role = "parttime"
+            }else if(element.Role == 2){
+                role = "fulltime"
+            }
+          let content =
+            element.CMT +
+            "-" +
+            element.Full_Name +
+            "-" +
+            element.Department +
+            "-" +
+            role +
+            "-"+
+            element.Hire_Date;
+
+          document.body.insertBefore(createDiv(content), employeeList);
+        });
+      });
+
+      function addEmployee() {
+        let cmt = document.getElementById("cmt").value;
+        let name = document.getElementById("name").value;
+        let department = document.getElementById("department").value;
+        let role = document.getElementById("role").value;
+        let hireDate = document.getElementById("hire-date").value;
+        let data = {
+          cmt: cmt,
+          name: name,
+          department: department,
+          role: role,
+          hireDate: hireDate,
+        };
+        console.log(data);
+        data = JSON.stringify(data);
+        post("create-employee", data)
+      }
+
+      function addWork() {
+        let cmt = document.getElementById("cmt-work").value;
+        let work = document.getElementById("work").value;
+        let date = document.getElementById("date-work").value;
+        let data = {
+          cmt: cmt,
+          work: work,
+          date: date,
+        };
+        console.log(data);
+        data = JSON.stringify(data);
+        post("add-work", data)
+      }
+      function getEmployee(){
+        let cmt = document.getElementById("cmt-get-employee").value;
+        let name = document.getElementById("name-get-employee").value;
+        let from = document.getElementById("from-get-employee").value;
+        let to = document.getElementById("to-get-employee").value;
+        let params= `?cmt=${cmt}&name=${name}&from=${from}&to=${to}`
+        console.log(params);
+        get("get-employee" + params).then(result=>{
+            result= JSON.parse(result)
+            let showEmployee =document.getElementById('get-employee')
+            result.forEach((element) => {
+          let content =
+            element.CMT +
+            "-" +
+            element.Full_Name +
+            "-" +
+            element.Department +
+            "-" +
+            element.Hire_Date;
+
+          document.body.insertBefore(createDiv(content), showEmployee);
+        });
+        })
+      }
+      function getSalary(){
+        let cmt = document.getElementById("cmt-get-salary-by-month").value;
+        let month = document.getElementById("month-get-salary-by-month").value;
+        let year = document.getElementById("year-get-salary-by-month").value;
+        let params= `?cmt=${cmt}&month=${month}&year=${year}`
+        get("get-salary-by-cmt-per-month" + params).then(result=>{
+            document.getElementById('salary-of-employee').innerHTML= `Lương của nhân viên này là ${result}`
+        })
+      }
+      function getAverageSalary(){
+        let month = document.getElementById("month-get-average-salary-in-month").value;
+        let year = document.getElementById("year-get-average-salary-in-month").value;
+        let params= `?month=${month}&year=${year}`
+        get("get-average-salary-in-month" + params).then(result=>{
+            document.getElementById('average-salary-of-month').innerHTML= `Lương trong tháng này là ${result}`
+        })
+      }
+    </script>
+  </body>
+</html>
